@@ -1,33 +1,31 @@
-# Utilise l'image PHP officielle avec Apache
+# Étape 1 : Image de base avec PHP et Apache
 FROM php:8.2-apache
 
-# Installer les dépendances système
+# Étape 2 : Installer les dépendances système
 RUN apt-get update && apt-get install -y \
     git curl libpng-dev libonig-dev libxml2-dev zip unzip \
     libzip-dev libjpeg-dev libfreetype6-dev nodejs npm \
+    dos2unix \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Activer le mod_rewrite
+# Étape 3 : Activer mod_rewrite pour Laravel
 RUN a2enmod rewrite
 
-# Copier composer
+# Étape 4 : Ajouter Composer
 COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
-# Définir le répertoire de travail
+# Étape 5 : Définir le répertoire de travail
 WORKDIR /var/www/html
 
-# Copier tous les fichiers dans le conteneur
+# Étape 6 : Copier les fichiers du projet
 COPY . .
 
-# Copier les fichiers de config Apache personnalisés (si besoin)
-# COPY ./docker/vhost.conf /etc/apache2/sites-available/000-default.conf
+# Étape 7 : Convertir build.sh en format UNIX et l’exécuter
+RUN dos2unix build.sh && chmod +x build.sh && ./build.sh
 
-# Donner les droits d'accès à Laravel
+# Étape 8 : Droits d’accès
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Lancer le script de build
-RUN ./build.sh
-
-# Exposer le port Apache
+# Étape 9 : Exposer le port Apache
 EXPOSE 80
